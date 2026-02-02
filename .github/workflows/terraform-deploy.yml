@@ -1,0 +1,46 @@
+name: terraform-dploy
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  terraform-plan:
+    runs-on: ubuntu-latest
+    # permission can be added at job level or workflow level
+    permissions:
+      id-token: write   # This is required for requesting the JWT
+      contents: read    # This is required for actions/checkout
+
+    steps:
+    - name: Git clone the repository 
+      uses: actions/checkout@v3
+    
+    - name: AWS Authetication
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: arn:aws:iam::183817605627:role/terraform-deployment-role
+        aws-region: us-east-1
+        role-session-name: githubterraformPlan
+    
+    - name: Terraform set up
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: v1.2.5
+    
+    - name: Terraform fmt
+      id: fmt
+      run: terraform fmt -check
+      continue-on-error: true
+    
+    - name: Terraform Init
+      id: init
+      run: terraform init
+
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate -no-color
+
+    - name: Terraform Plan
+      id: plan
+      run: terraform plan -no-color
+      continue-on-error: true
