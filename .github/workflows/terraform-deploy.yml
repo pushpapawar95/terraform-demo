@@ -4,7 +4,7 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
-  terraform-plan:
+  terraform-plan-deploy:
     runs-on: ubuntu-latest
     # permission can be added at job level or workflow level
     permissions:
@@ -44,3 +44,6 @@ jobs:
       id: plan
       run: terraform plan -no-color
       continue-on-error: true
+    
+    - name: Terraform applying
+      run: terraform apply -auto-approve
