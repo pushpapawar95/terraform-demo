@@ -15,8 +15,7 @@ jobs:
     environment: dev
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: AWS Authentication
         uses: aws-actions/configure-aws-credentials@v1
@@ -25,8 +24,7 @@ jobs:
           aws-region: us-east-1
           role-session-name: terraform-dev
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.2.5
 
@@ -34,17 +32,16 @@ jobs:
         run: terraform init
 
       - name: Select Dev Workspace
-        run: |
-          terraform workspace select dev || terraform workspace new dev
+        run: terraform workspace select dev || terraform workspace new dev
 
       - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform Plan
-        run: terraform plan -no-color
+      - name: Terraform Plan (Dev)
+        run: terraform plan -no-color -var-file=dev.tfvars
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+      - name: Terraform Apply (Dev)
+        run: terraform apply -auto-approve -var-file=dev.tfvars
 
 
   terraform-test:
@@ -54,8 +51,7 @@ jobs:
     environment: test
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: AWS Authentication
         uses: aws-actions/configure-aws-credentials@v1
@@ -64,8 +60,7 @@ jobs:
           aws-region: us-east-1
           role-session-name: terraform-test
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.2.5
 
@@ -73,17 +68,16 @@ jobs:
         run: terraform init
 
       - name: Select Test Workspace
-        run: |
-          terraform workspace select test || terraform workspace new test
+        run: terraform workspace select test || terraform workspace new test
 
       - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform Plan
-        run: terraform plan -no-color
+      - name: Terraform Plan (Test)
+        run: terraform plan -no-color -var-file=test.tfvars
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+      - name: Terraform Apply (Test)
+        run: terraform apply -auto-approve -var-file=test.tfvars
 
 
   terraform-prod:
@@ -93,8 +87,7 @@ jobs:
     environment: prod
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: AWS Authentication
         uses: aws-actions/configure-aws-credentials@v1
@@ -103,8 +96,7 @@ jobs:
           aws-region: us-east-1
           role-session-name: terraform-prod
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.2.5
 
@@ -112,14 +104,13 @@ jobs:
         run: terraform init
 
       - name: Select Prod Workspace
-        run: |
-          terraform workspace select prod || terraform workspace new prod
+        run: terraform workspace select prod || terraform workspace new prod
 
       - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform Plan
-        run: terraform plan -no-color
+      - name: Terraform Plan (Prod)
+        run: terraform plan -no-color -var-file=prod.tfvars
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
+      - name: Terraform Apply (Prod)
+        run: terraform apply -auto-approve -var-file=prod.tfvars
