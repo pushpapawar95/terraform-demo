@@ -1,93 +1,125 @@
-name: terraform-dploy
+name: terraform-deploy
+
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
-  terraform-plan:
+  terraform-dev:
+    name: Terraform Dev
     runs-on: ubuntu-latest
-    # permission can be added at job level or workflow level
-    permissions:
-      id-token: write   # This is required for requesting the JWT
-      contents: read    # This is required for actions/checkout
+    environment: dev
 
     steps:
-    - name: Git clone the repository 
-      uses: actions/checkout@v3
-    
-    - name: AWS Authetication
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        role-to-assume: arn:aws:iam::183817605627:role/terraform-deployment-role
-        aws-region: us-east-1
-        role-session-name: githubterraformPlan
-    
-    - name: Terraform set up
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: v1.2.5
-    
-    - name: Terraform fmt
-      id: fmt
-      run: terraform fmt -check
-      continue-on-error: true
-    
-    - name: Terraform Init
-      id: init
-      run: terraform init
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Terraform Validate
-      id: validate
-      run: terraform validate -no-color
+      - name: AWS Authentication
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::183817605627:role/terraform-deployment-role
+          aws-region: us-east-1
+          role-session-name: terraform-dev
 
-    - name: Terraform Plan
-      id: plan
-      run: terraform plan -no-color
-      continue-on-error: true
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.2.5
 
-  terraform-apply:
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Select Dev Workspace
+        run: |
+          terraform workspace select dev || terraform workspace new dev
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -no-color
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+
+  terraform-test:
+    name: Terraform Test
     runs-on: ubuntu-latest
-    needs: [terraform-plan]
-    environment:
-      name: prod 
-    # permission can be added at job level or workflow level
-    permissions:
-      id-token: write   # This is required for requesting the JWT
-      contents: read    # This is required for actions/checkout
+    needs: terraform-dev
+    environment: test
 
     steps:
-    - name: Git clone the repository 
-      uses: actions/checkout@v3
-    
-    - name: AWS Authetication
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        role-to-assume: arn:aws:iam::183817605627:role/terraform-deployment-role
-        aws-region: us-east-1
-        role-session-name: githubterraformPlan
-    
-    - name: Terraform set up
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: v1.2.5
-    
-    - name: Terraform fmt
-      id: fmt
-      run: terraform fmt -check
-      continue-on-error: true
-    
-    - name: Terraform Init
-      id: init
-      run: terraform init
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Terraform Validate
-      id: validate
-      run: terraform validate -no-color
+      - name: AWS Authentication
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::183817605627:role/terraform-deployment-role
+          aws-region: us-east-1
+          role-session-name: terraform-test
 
-    - name: Terraform Plan
-      id: plan
-      run: terraform plan -no-color
-      continue-on-error: true
-    
-    - name: Terraform applying
-      run: terraform apply -auto-approve
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.2.5
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Select Test Workspace
+        run: |
+          terraform workspace select test || terraform workspace new test
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -no-color
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+
+  terraform-prod:
+    name: Terraform Prod
+    runs-on: ubuntu-latest
+    needs: terraform-test
+    environment: prod
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: AWS Authentication
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::183817605627:role/terraform-deployment-role
+          aws-region: us-east-1
+          role-session-name: terraform-prod
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.2.5
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Select Prod Workspace
+        run: |
+          terraform workspace select prod || terraform workspace new prod
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -no-color
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve

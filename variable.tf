@@ -15,3 +15,15 @@ variable "instance_type" {
   type        = string
   default     = ""
 }
+
+variable "instance_name" {
+  description = "Name of EC2 instance"
+  type = string
+  default = ""
+}
+
+variable "Environment" {
+  description = "Type of environment"
+  type = string
+  default = ""
+}
